@@ -5,6 +5,7 @@
 <title>Shekinah's @18 RSVP</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
+<!-- Google Fonts -->
 <link href="https://fonts.googleapis.com/css2?family=Great+Vibes&family=Montserrat:wght@400;600&display=swap" rel="stylesheet">
 
 <style>
@@ -48,6 +49,7 @@ button:hover { background:#a00000; box-shadow:0 5px 15px rgba(160,0,0,0.4); }
   <div id="thankYouCard"></div>
 </div>
 
+<!-- Hidden iframe to submit form without leaving page -->
 <iframe name="hidden_iframe" style="display:none;"></iframe>
 
 <script>
@@ -60,24 +62,34 @@ function searchGuest() {
   const membersList = document.getElementById("membersList");
   const thankYouCard = document.getElementById("thankYouCard");
 
+  // Reset UI
   message.innerText = "";
   membersList.innerHTML = "";
+  form.classList.add("hidden");
   thankYouCard.classList.remove("show");
 
-  if (!name) { message.innerText="Please enter your name."; form.classList.add("hidden"); return; }
+  if (!name) {
+    message.innerText = "Please enter your name.";
+    return;
+  }
 
+  // Fetch group members from Apps Script
   fetch(SCRIPT_URL + "?name=" + encodeURIComponent(name))
     .then(res => res.json())
     .then(data => {
-      if (!data.found) { message.innerText="Name not on the guest list."; form.classList.add("hidden"); return; }
+      if (!data.found || !data.members || data.members.length === 0) {
+        message.innerText = "Name not on the guest list.";
+        return;
+      }
 
       message.innerText = "Please confirm RSVP for your group members:";
-      form.action = SCRIPT_URL;
       form.classList.remove("hidden");
 
+      // Add each member to the form
       data.members.forEach(member => {
         const div = document.createElement("div");
         div.style.marginBottom = "10px";
+
         div.innerHTML = `
           <span>${member.name}</span>
           <input type="hidden" name="row" value="${member.row}">
@@ -87,13 +99,16 @@ function searchGuest() {
             <option value="No" ${member.attendance === "No" ? "selected" : ""}>No</option>
           </select>
         `;
+
         membersList.appendChild(div);
       });
     })
-    .catch(() => { message.innerText="Error connecting to server."; });
+    .catch(() => {
+      message.innerText = "Error connecting to server.";
+    });
 }
 
-// Show thank-you after submission
+// After submission, show thank-you
 document.getElementById("rsvpForm").addEventListener("submit", function() {
   document.getElementById("rsvpForm").classList.add("hidden");
   document.getElementById("message").innerText = "";
