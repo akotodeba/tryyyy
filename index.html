@@ -4,7 +4,10 @@
 <meta charset="UTF-8">
 <title>Shekinah's @18 RSVP</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<!-- Google Fonts -->
 <link href="https://fonts.googleapis.com/css2?family=Great+Vibes&family=Montserrat:wght@400;600&display=swap" rel="stylesheet">
+
 <style>
 body { font-family:'Montserrat', sans-serif; background:url('https://i.imgur.com/AUfRfam.jpeg') no-repeat center center fixed; background-size:cover; margin:0; display:flex; justify-content:center; align-items:center; min-height:100vh; position:relative; }
 body::before { content:""; position:absolute; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.45); z-index:0; }
@@ -38,7 +41,7 @@ button:hover { background:#a00000; box-shadow:0 5px 15px rgba(160,0,0,0.4); }
   <p id="message"></p>
 
   <!-- RSVP form -->
-  <form id="rsvpForm" class="hidden" method="POST" target="hidden_iframe" action="https://script.google.com/macros/s/AKfycbxybhfH2wbKW3sEVuyzhO7FX7tVeOasZF1A6njSFHxhZwm-2RM9rJMKdQP8oYwRADEk/exec">
+  <form id="rsvpForm" class="hidden" method="POST" target="hidden_iframe">
     <div id="membersList"></div>
     <button type="submit">Confirm RSVP</button>
   </form>
@@ -46,14 +49,15 @@ button:hover { background:#a00000; box-shadow:0 5px 15px rgba(160,0,0,0.4); }
   <div id="thankYouCard"></div>
 </div>
 
-<!-- Hidden iframe to avoid page reload -->
+<!-- Hidden iframe to submit without CORS -->
 <iframe name="hidden_iframe" style="display:none;"></iframe>
 
 <script>
-const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxybhfH2wbKW3sEVuyzhO7FX7tVeOasZF1A6njSFHxhZwm-2RM9rJMKdQP8oYwRADEk/exec"; // Replace with your deployed Apps Script
+// Replace this with your deployed Apps Script web app URL
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxybhfH2wbKW3sEVuyzhO7FX7tVeOasZF1A6njSFHxhZwm-2RM9rJMKdQP8oYwRADEk/exec";
 
 function searchGuest() {
-  const name = document.getElementById("guestName").value.trim().toLowerCase();
+  const name = document.getElementById("guestName").value.trim();
   const message = document.getElementById("message");
   const form = document.getElementById("rsvpForm");
   const membersList = document.getElementById("membersList");
@@ -69,8 +73,8 @@ function searchGuest() {
     return; 
   }
 
-  // Get group members via GET request
-  fetch(SCRIPT_URL + "?name=" + encodeURIComponent(name))
+  // GET request to Apps Script to get group members
+  fetch(`${SCRIPT_URL}?name=${encodeURIComponent(name)}`)
     .then(res => res.json())
     .then(data => {
       if (!data.found || !data.members || data.members.length === 0) {
@@ -81,10 +85,10 @@ function searchGuest() {
       message.innerText = "Please confirm RSVP for your group members:";
       form.classList.remove("hidden");
 
+      // Generate inputs for each member
       data.members.forEach(member => {
         const div = document.createElement("div");
         div.style.marginBottom = "10px";
-
         div.innerHTML = `
           <span>${member.name}</span>
           <input type="hidden" name="row" value="${member.row}">
@@ -100,7 +104,7 @@ function searchGuest() {
     .catch(() => { message.innerText = "Error connecting to server."; });
 }
 
-// Show thank-you after submission
+// Show thank-you after submission (hidden iframe will handle POST)
 document.getElementById("rsvpForm").addEventListener("submit", function() {
   this.classList.add("hidden");
   document.getElementById("message").innerText = "";
