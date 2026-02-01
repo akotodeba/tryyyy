@@ -34,13 +34,13 @@ button:hover { background:#a00000; box-shadow:0 5px 15px rgba(160,0,0,0.4); }
 
   <div class="input-container">
     <input type="text" id="guestName" placeholder="Full Name">
-    <button onclick="searchGuest()">Search</button>
+    <button type="button" onclick="searchGuest()">Search</button>
   </div>
 
   <p id="message"></p>
 
   <!-- RSVP form -->
-  <form id="rsvpForm" class="hidden" method="POST" target="hidden_iframe" action="https://script.google.com/macros/s/AKfycbwXmuNog8RjJF5fkB-xPU6N9PgbzmordbCyphlHb2PZmIW41qGnxiasO8K2fY7YyJjy/exec">
+  <form id="rsvpForm" class="hidden" method="POST" target="hidden_iframe">
     <div id="membersList"></div>
     <button type="submit">Confirm RSVP</button>
   </form>
@@ -51,54 +51,56 @@ button:hover { background:#a00000; box-shadow:0 5px 15px rgba(160,0,0,0.4); }
 <iframe name="hidden_iframe" style="display:none;"></iframe>
 
 <script>
-const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwXmuNog8RjJF5fkB-xPU6N9PgbzmordbCyphlHb2PZmIW41qGnxiasO8K2fY7YyJjy/exec"; // replace with your Apps Script Web App URL
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwXmuNog8RjJF5fkB-xPU6N9PgbzmordbCyphlHb2PZmIW41qGnxiasO8K2fY7YyJjy/exec";
 
-function searchGuest(){
+function searchGuest() {
   const name = document.getElementById("guestName").value.trim();
   const message = document.getElementById("message");
   const form = document.getElementById("rsvpForm");
   const membersList = document.getElementById("membersList");
   const thankYouCard = document.getElementById("thankYouCard");
 
-  thankYouCard.classList.remove("show");
-  membersList.innerHTML = "";
   message.innerText = "";
+  membersList.innerHTML = "";
+  thankYouCard.classList.remove("show");
 
-  if(!name){ message.innerText="Please enter your name."; form.classList.add("hidden"); return; }
+  if (!name) { message.innerText="Please enter your name."; form.classList.add("hidden"); return; }
 
-  fetch(SCRIPT_URL+"?name="+encodeURIComponent(name))
-    .then(res=>res.json())
-    .then(data=>{
-      if(!data.found){ message.innerText="Name not on the guest list."; form.classList.add("hidden"); return; }
+  fetch(SCRIPT_URL + "?name=" + encodeURIComponent(name))
+    .then(res => res.json())
+    .then(data => {
+      if (!data.found) { message.innerText="Name not on the guest list."; form.classList.add("hidden"); return; }
 
-      message.innerText="Please confirm RSVP for your group members:";
+      message.innerText = "Please confirm RSVP for your group members:";
+      form.action = SCRIPT_URL;
       form.classList.remove("hidden");
 
-      data.members.forEach(member=>{
+      data.members.forEach(member => {
         const div = document.createElement("div");
-        div.style.marginBottom="10px";
+        div.style.marginBottom = "10px";
         div.innerHTML = `
           <span>${member.name}</span>
           <input type="hidden" name="row" value="${member.row}">
-          <select name="attendance">
+          <select name="attendance" required>
             <option value="">--Select--</option>
-            <option value="Yes" ${member.attendance==="Yes"?"selected":""}>Yes</option>
-            <option value="No" ${member.attendance==="No"?"selected":""}>No</option>
+            <option value="Yes" ${member.attendance === "Yes" ? "selected" : ""}>Yes</option>
+            <option value="No" ${member.attendance === "No" ? "selected" : ""}>No</option>
           </select>
         `;
         membersList.appendChild(div);
       });
     })
-    .catch(()=>message.innerText="Error connecting to server.");
+    .catch(() => { message.innerText="Error connecting to server."; });
 }
 
-// Show thank you message after form submission
-document.getElementById("rsvpForm").addEventListener("submit", function(){
+// Show thank-you after submission
+document.getElementById("rsvpForm").addEventListener("submit", function() {
   document.getElementById("rsvpForm").classList.add("hidden");
-  document.getElementById("message").innerText="";
-  document.getElementById("thankYouCard").innerText="RSVP saved! Thank you 💖";
-  document.getElementById("thankYouCard").style.display="block";
-  setTimeout(()=>document.getElementById("thankYouCard").classList.add("show"),50);
+  document.getElementById("message").innerText = "";
+  const thankYouCard = document.getElementById("thankYouCard");
+  thankYouCard.innerText = "RSVP saved! Thank you 💖";
+  thankYouCard.style.display = "block";
+  setTimeout(() => thankYouCard.classList.add("show"), 50);
 });
 </script>
 
